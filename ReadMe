@@ -1,0 +1,148 @@
+Tool Rental Management Application
+
+Rental Application is built using multi modular spring boot framework.
+Multi-module enables to inherit capabilities from parent and yet able to deploy each individual module independently.
+
+kk0424 - Parent
+
+Child modules :
+Users
+Inventory
+cart
+orders
+
+
+---------------------------------------------------------------------------------------------------------------------------
+Users Module :
+
+UserService.java
+
+Created 2 user using java POJO. Thsi data in reality will be coming from DB,
+for testing and assessment purposes i'm creating users on application start.
+
+getUserProfile(String username) to return userprofile object.
+
+UserController.java
+
+login endpoint for user.
+In real world we will use OAuth2.0 with OICD for authoentication and authorization.
+In theory this service will integrate with company auth server and issue accessToken and refreshToken.
+
+when ran locally its configured to run on server.port=8084.
+example : http://localhost:8084/users/login?userName=kkeenala
+
+------------------------------------------------------------------------------------------------------------------------
+
+Inventory Module:
+
+Tools.java
+Enum class to hold tool metadata (Ideally will be in DB).
+
+Prices.java
+Enum class to hold prices for tool type (Ideally will be in DB).
+
+InventoryService.java
+Inventory Service is responsible for getting tools available and adjusting the tool counts when customer rent.
+I'm using hashmap to store tool information (Ideally will be in DB). The key is toolCode and the value the is count.
+
+InventoryController.java
+Endpoint operations on tools. Such as getAll, getByCode, getByType, update etc.
+
+
+
+service runs on server.port=8085
+
+Examples:
+http://localhost:8085/inventory/ --- lists all the available tools.
+http://localhost:8085/inventory/code?code=CHNS -- get tool by code.
+http://localhost:8085/inventory/type?type=Jackhammer -- get tool by type.
+http://localhost:8085/inventory/code?code=CHNS&rentCount=10 -- update tool count. This api will be used to update the count when tool is rented.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+Cart Module:
+
+CartService.java
+Cart service is responsible for
+1. initiating a new cart items.
+2. adding items to the cart.
+3. deleting items from the cart.
+4. deleting cart.
+
+CartController.java
+Comprises of the endpoints to perform CRUD operations.
+
+server.port=8082
+
+Examples:
+
+PUT ( increase or reduce count on the item) -- http://localhost:8082/cart/createAdjustCart?code=JAKD&quantity=10&userId=kkeenala&operation=add
+PUT ( remove item from the cart) -- http://localhost:8082/cart/deleteItem?code=JAKD&userId=kkeenala
+DELETE ( delete cart) -- http://localhost:8082/cart/deleteCart?userId=kkeenala
+GET ( cart) -- http://localhost:8082/cart/getCart?userId=kkeenala
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Orders Module:
+
+OrderService.java
+Order Service is responsible for checkout process.
+1. Evaluating holidays and weekends.
+2. Calculating discount.
+3. Final charge.
+
+FederalHoliday.java
+Checks if the date is a holiday(Independence day, Labor day) or a weekend.
+
+OrderController.java
+
+Contains checkout endpoint.
+
+server.port=8083
+
+******* Important *****
+MAKE SURE "Inventory Service (port: 8085)" is running before launching "Order Service (port: 8083)".
+"Order service" makes an endpoint call to "Inventory Service" to get tools metadata.
+
+POST - http://localhost:8083/orders/checkout
+
+sample Request payload:
+{
+    "preDiscountCharge" : 146.45678,
+    "discountPercent" : 20,
+    "toolCode" : "CHNS",
+    "rentalDays" : 8,
+    "checkoutDate" : "2024-07-03"
+}
+
+sample Response payload:
+{
+    "toolCode": "CHNS",
+    "toolType": "Chainsaw",
+    "rentalDays": 8,
+    "checkoutDate": "2024-07-03",
+    "dueDate": "2024-07-11",
+    "dailyRentalCharge": 1.49,
+    "chargeDays": 6,
+    "preDiscountCharge": "$8.94",
+    "discountPercent": "20%",
+    "discountedAmount": "$1.79",
+    "finalCharge": "$7.15"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
